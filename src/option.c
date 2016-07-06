@@ -159,6 +159,7 @@ struct myoption {
 #define LOPT_SCRIPT_ARP    347
 #define LOPT_DHCPTTL       348
 #define LOPT_TFTP_MTU      349
+#define LOPT_NXD_AS_NODATA 350
  
 #ifdef HAVE_GETOPT_LONG
 static const struct option opts[] =  
@@ -323,6 +324,7 @@ static const struct myoption opts[] =
     { "dns-loop-detect", 0, 0, LOPT_LOOP_DETECT },
     { "script-arp", 0, 0, LOPT_SCRIPT_ARP },
     { "dhcp-ttl", 1, 0 , LOPT_DHCPTTL },
+	{ "nxdomain-as-nodata", 0, 0 , LOPT_NXD_AS_NODATA },
     { NULL, 0, 0, 0 }
   };
 
@@ -494,6 +496,7 @@ static struct {
   { LOPT_LOOP_DETECT, OPT_LOOP_DETECT, NULL, gettext_noop("Detect and remove DNS forwarding loops."), NULL },
   { LOPT_IGNORE_ADDR, ARG_DUP, "<ipaddr>", gettext_noop("Ignore DNS responses containing ipaddr."), NULL }, 
   { LOPT_DHCPTTL, ARG_ONE, "<ttl>", gettext_noop("Set TTL in DNS responses with DHCP-derived addresses."), NULL }, 
+  { LOPT_NXD_AS_NODATA, OPT_NXD_AS_NODATA, NULL, gettext_noop("Treat all NXDOMAIN answers from upstream DNS servers as NODATA."), NULL }, 
   { 0, 0, NULL, NULL, NULL }
 }; 
 

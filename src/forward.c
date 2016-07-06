@@ -207,7 +207,7 @@ static unsigned int search_servers(time_t now, struct all_addr **addrpp, unsigne
     /* don't forward A or AAAA queries for simple names, except the empty name */
     flags = F_NOERR;
   
-  if (flags == F_NXDOMAIN && check_for_local_domain(qdomain, now))
+  if (flags == F_NXDOMAIN && (check_for_local_domain(qdomain, now) || option_bool(OPT_NXD_AS_NODATA)))
     flags = F_NOERR;
 
   if (flags)
@@ -665,7 +665,8 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
       
       if (RCODE(header) == NXDOMAIN && 
 	  extract_request(header, n, daemon->namebuff, NULL) &&
-	  check_for_local_domain(daemon->namebuff, now))
+	  (check_for_local_domain(daemon->namebuff, now) ||
+	   option_bool(OPT_NXD_AS_NODATA)))
 	{
 	  /* if we forwarded a query for a locally known name (because it was for 
 	     an unknown type) and the answer is NXDOMAIN, convert that to NODATA,
