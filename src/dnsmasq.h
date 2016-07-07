@@ -238,7 +238,7 @@ struct event_desc {
 #define OPT_SCRIPT_ARP     53
 #define OPT_MAC_B64        54
 #define OPT_MAC_HEX        55
-#define OPT_NXD_AS_NODATA  56
+#define OPT_NXD_AS_REFUSED 56
 #define OPT_LAST           57
 
 /* extra flags for my_syslog, we use a couple of facilities since they are known 

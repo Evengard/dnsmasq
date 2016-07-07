@@ -207,7 +207,7 @@ static unsigned int search_servers(time_t now, struct all_addr **addrpp, unsigne
     /* don't forward A or AAAA queries for simple names, except the empty name */
     flags = F_NOERR;
   
-  if (flags == F_NXDOMAIN && (check_for_local_domain(qdomain, now) || option_bool(OPT_NXD_AS_NODATA)))
+  if (flags == F_NXDOMAIN && check_for_local_domain(qdomain, now))
     flags = F_NOERR;
 
   if (flags)
@@ -659,14 +659,20 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
       header->hb3 &= ~HB3_AA;
       cache_secure = 0;
     }
-  else 
-    {
+	
       int doctored = 0;
-      
+    
+	  if (RCODE(header) == NXDOMAIN &&
+	  option_bool(OPT_NXD_AS_REFUSED))
+	{
+	  munged = 1;
+	  cache_secure = 0;
+	  SET_RCODE(header, REFUSED);
+	}
+	
       if (RCODE(header) == NXDOMAIN && 
 	  extract_request(header, n, daemon->namebuff, NULL) &&
-	  (check_for_local_domain(daemon->namebuff, now) ||
-	   option_bool(OPT_NXD_AS_NODATA)))
+	  check_for_local_domain(daemon->namebuff, now))
 	{
 	  /* if we forwarded a query for a locally known name (because it was for 
 	     an unknown type) and the answer is NXDOMAIN, convert that to NODATA,
@@ -686,7 +692,6 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
 
       if (doctored)
 	cache_secure = 0;
-    }
   
 #ifdef HAVE_DNSSEC
   if (bogusanswer && !(header->hb4 & HB4_CD) && !option_bool(OPT_DNSSEC_DEBUG))
