@@ -665,9 +665,32 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
 	  if (RCODE(header) == NXDOMAIN &&
 	  option_bool(OPT_NXD_AS_REFUSED))
 	{
-	  munged = 1;
-	  cache_secure = 0;
-	  SET_RCODE(header, REFUSED);
+      SET_RCODE(header, REFUSED);
+	  unsigned char *pheader;
+      size_t plen;
+      int is_sign;
+      
+      /* recreate query from reply */
+      pheader = find_pseudoheader(header, (size_t)n, &plen, NULL, &is_sign, NULL);
+      if (!is_sign)
+	{
+	  header->ancount = htons(0);
+	  header->nscount = htons(0);
+	  header->arcount = htons(0);
+	  if ((nn = resize_packet(header, (size_t)n, pheader, plen)))
+	    {
+	      header->hb3 &= ~(HB3_QR | HB3_AA | HB3_TC);
+	      header->hb4 &= ~(HB4_RA | HB4_RCODE | HB4_CD | HB4_AD);
+	      if (forward->flags & FREC_CHECKING_DISABLED)
+		header->hb4 |= HB4_CD;
+	      if (forward->flags & FREC_AD_QUESTION)
+		header->hb4 |= HB4_AD;
+	      if (forward->flags & FREC_DO_QUESTION)
+		add_do_bit(header, nn,  (unsigned char *)pheader + plen);
+	      forward_query(-1, NULL, NULL, 0, header, nn, now, forward, forward->flags & FREC_AD_QUESTION, forward->flags & FREC_DO_QUESTION);
+	      return;
+	    }
+	}
 	}
 	
       if (RCODE(header) == NXDOMAIN && 
