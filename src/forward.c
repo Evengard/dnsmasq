@@ -681,7 +681,18 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
 	  header->arcount = htons(0);
 	  if ((nn = resize_packet(header, (size_t)n, pheader, plen)))
 	    {
-	      if (!(forward = lookup_frec(ntohs(header->id), hash)))
+			  void *hash;
+			#ifndef HAVE_DNSSEC
+			  unsigned int crc;
+			#endif
+	      #ifdef HAVE_DNSSEC
+			  hash = hash_questions(header, n, daemon->namebuff);
+			#else
+			  hash = &crc;
+			  crc = questions_crc(header, n, daemon->namebuff);
+			#endif
+		  
+		  if (!(forward = lookup_frec(ntohs(header->id), hash)))
 			return;
 		  
 		  header->hb3 &= ~(HB3_QR | HB3_AA | HB3_TC);
