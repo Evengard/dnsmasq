@@ -694,6 +694,9 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
 		  
 		  if (!(forward = lookup_frec(ntohs(header->id), hash)))
 			return;
+		
+		if (forward->forwardall != 0)
+			return;
 		  
 		  header->hb3 &= ~(HB3_QR | HB3_AA | HB3_TC);
 	      header->hb4 &= ~(HB4_RA | HB4_RCODE | HB4_CD | HB4_AD);
@@ -703,6 +706,8 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
 		header->hb4 |= HB4_AD;
 	      if (forward->flags & FREC_DO_QUESTION)
 		add_do_bit(header, nn,  (unsigned char *)pheader + plen);
+	
+		  my_syslog(LOG_INFO, _("forwarding a NXDOMAIN with OPT_NXD_AS_REFUSED"));
 	      forward_query(-1, NULL, NULL, 0, header, nn, now, forward, forward->flags & FREC_AD_QUESTION, forward->flags & FREC_DO_QUESTION);
 	      return;
 	    }
