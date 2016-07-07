@@ -668,7 +668,9 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
       SET_RCODE(header, REFUSED);
 	  unsigned char *pheader;
       size_t plen;
+	  size_t nn;
       int is_sign;
+	  struct frec *forward;
       
       /* recreate query from reply */
       pheader = find_pseudoheader(header, (size_t)n, &plen, NULL, &is_sign, NULL);
@@ -679,7 +681,10 @@ static size_t process_reply(struct dns_header *header, time_t now, struct server
 	  header->arcount = htons(0);
 	  if ((nn = resize_packet(header, (size_t)n, pheader, plen)))
 	    {
-	      header->hb3 &= ~(HB3_QR | HB3_AA | HB3_TC);
+	      if (!(forward = lookup_frec(ntohs(header->id), hash)))
+			return;
+		  
+		  header->hb3 &= ~(HB3_QR | HB3_AA | HB3_TC);
 	      header->hb4 &= ~(HB4_RA | HB4_RCODE | HB4_CD | HB4_AD);
 	      if (forward->flags & FREC_CHECKING_DISABLED)
 		header->hb4 |= HB4_CD;
